@@ -1,5 +1,4 @@
 name: "CI/CD: React to S3 plus CloudFront (OIDC Secure)"
-
 on:
   push:
     branches:
@@ -12,6 +11,11 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
+    # CRITICAL: Add permissions for OIDC token
+    permissions:
+      id-token: write # This is required for requesting the JWT
+      contents: read # This is required for actions/checkout
 
     steps:
       - name: Checkout Code
@@ -36,11 +40,11 @@ jobs:
 
       - name: Debug OIDC Token Presence
         run: |
-          echo "Token: $ACTIONS_ID_TOKEN_REQUEST_TOKEN"
-          echo "URL: $ACTIONS_ID_TOKEN_REQUEST_URL"
+          echo "Token available: ${{ env.ACTIONS_ID_TOKEN_REQUEST_TOKEN != '' }}"
+          echo "URL available: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL != '' }}"
 
       - name: Configure AWS Credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4 # Updated to latest version
         with:
           role-to-assume: arn:aws:iam::455037549316:role/GithubOIDCDeployRole
           aws-region: ${{ env.AWS_REGION }}
@@ -54,7 +58,6 @@ jobs:
           elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
             BUCKET=staging.iamvenkateshsagar.in
           fi
-
           echo "Deploying to S3 bucket: $BUCKET"
           aws s3 sync build/ s3://$BUCKET --delete
 
@@ -65,6 +68,5 @@ jobs:
           elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
             DIST_ID=${{ secrets.CLOUDFRONT_STAGING_ID }}
           fi
-
           echo "Invalidating CloudFront distribution: $DIST_ID"
           aws cloudfront create-invalidation --distribution-id $DIST_ID --paths "/*"
