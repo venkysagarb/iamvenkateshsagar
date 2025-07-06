@@ -5,6 +5,7 @@ const About = () => {
     <section className="section">
       <h2>About Me</h2>
       <p>I am passionate about AWS Cloud, DevOps automation, CI/CD pipelines, and infrastructure as code.</p>
+      <p>I am passionate about AWS Cloud, DevOps automation, CI/CD pipelines, and infrastructure as code.</p>
     </section>
   );
 };
