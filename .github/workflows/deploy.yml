@@ -1,4 +1,4 @@
-name: "CI/CD: React to S3 + CloudFront"
+name: "CI/CD: React to S3 + CloudFront (OIDC Secure)"
 
 on:
   push:
@@ -28,19 +28,18 @@ jobs:
       - name: Build React App
         run: npm run build
 
-      - name: Configure AWS Credentials
+      - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: arn:aws:iam::<YOUR_ACCOUNT_ID>:role/GithubOIDCDeployRole
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Deploy to S3
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            BUCKET=${{ secrets.S3_PROD_BUCKET }}
+            BUCKET=venkatesh-portfolio-app
           elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
-            BUCKET=${{ secrets.S3_STAGING_BUCKET }}
+            BUCKET=staging.iamvenkateshsagar.in
           fi
 
           echo "Deploying to S3 bucket: $BUCKET"
