@@ -51,7 +51,7 @@ jobs:
           audience: sts.amazonaws.com
           role-session-name: github-session
 
-      - name: Deploy to S3
+      - name: Deploy to S3 bucket
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             BUCKET=venkatesh-portfolio-app
