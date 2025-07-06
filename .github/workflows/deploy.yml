@@ -1,4 +1,4 @@
-name: "CI/CD: React to S3 + CloudFront (OIDC Secure)"
+name: "CI/CD: React to S3 plus CloudFront (OIDC Secure)"
 
 on:
   push:
