@@ -44,9 +44,9 @@ jobs:
           echo "URL available: ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL != '' }}"
 
       - name: Configure AWS Credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4 # Updated to latest version
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::455037549316:role/GithubOIDCDeployRole
+          role-to-assume: arn:aws:iam::34343432345:role/GithubOIDCDeployRole
           aws-region: ${{ env.AWS_REGION }}
           audience: sts.amazonaws.com
           role-session-name: github-session
@@ -59,14 +59,32 @@ jobs:
             BUCKET=staging.iamvenkateshsagar.in
           fi
           echo "Deploying to S3 bucket: $BUCKET"
+
+          # Check if BUCKET is empty
+          if [[ -z "$BUCKET" ]]; then
+            echo "ERROR: S3 bucket name is empty. Please check your branch configuration."
+            exit 1
+          fi
+
           aws s3 sync build/ s3://$BUCKET --delete
 
       - name: Invalidate CloudFront Cache
+        env:
+          CLOUDFRONT_PROD_ID: ${{ secrets.CLOUDFRONT_PROD_ID }}
+          CLOUDFRONT_STAGING_ID: ${{ secrets.CLOUDFRONT_STAGING_ID }}
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            DIST_ID=${{ secrets.CLOUDFRONT_PROD_ID }}
+            DIST_ID="$CLOUDFRONT_PROD_ID"
           elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
-            DIST_ID=${{ secrets.CLOUDFRONT_STAGING_ID }}
+            DIST_ID="$CLOUDFRONT_STAGING_ID"
           fi
           echo "Invalidating CloudFront distribution: $DIST_ID"
-          aws cloudfront create-invalidation --distribution-id $DIST_ID --paths "/*"
+
+          # Check if DIST_ID is empty
+          if [[ -z "$DIST_ID" ]]; then
+            echo "ERROR: Distribution ID is empty. Please check your GitHub secrets."
+            echo "Required secrets: CLOUDFRONT_PROD_ID, CLOUDFRONT_STAGING_ID"
+            exit 1
+          fi
+
+          aws cloudfront create-invalidation --distribution-id "$DIST_ID" --paths "/*"
