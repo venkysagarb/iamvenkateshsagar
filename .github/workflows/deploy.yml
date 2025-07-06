@@ -1,0 +1,58 @@
+name: "CI/CD: React to S3 + CloudFront"
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+
+env:
+  AWS_REGION: ap-south-1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build React App
+        run: npm run build
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy to S3
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            BUCKET=${{ secrets.S3_PROD_BUCKET }}
+          elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+            BUCKET=${{ secrets.S3_STAGING_BUCKET }}
+          fi
+
+          echo "Deploying to S3 bucket: $BUCKET"
+          aws s3 sync build/ s3://$BUCKET --delete
+
+      - name: Invalidate CloudFront Cache
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            DIST_ID=${{ secrets.CLOUDFRONT_PROD_ID }}
+          elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+            DIST_ID=${{ secrets.CLOUDFRONT_STAGING_ID }}
+          fi
+
+          echo "Invalidating CloudFront distribution: $DIST_ID"
+          aws cloudfront create-invalidation --distribution-id $DIST_ID --paths "/*"
