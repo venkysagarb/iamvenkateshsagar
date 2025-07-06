@@ -34,6 +34,11 @@ jobs:
           echo "Repository: ${{ github.repository }}"
           echo "Ref: ${{ github.ref }}"
 
+          - name: Debug OIDC Token Presence
+            run: |
+              echo "Token: $ACTIONS_ID_TOKEN_REQUEST_TOKEN"
+              echo "URL: $ACTIONS_ID_TOKEN_REQUEST_URL"
+
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v2
         with:
