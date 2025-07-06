@@ -27,17 +27,17 @@ jobs:
 
       - name: Build React App
         run: npm run build
-        # 👇 Add this debug step here
+
       - name: Print GitHub context
         run: |
           echo "Actor: ${{ github.actor }}"
           echo "Repository: ${{ github.repository }}"
           echo "Ref: ${{ github.ref }}"
 
-          - name: Debug OIDC Token Presence
-            run: |
-              echo "Token: $ACTIONS_ID_TOKEN_REQUEST_TOKEN"
-              echo "URL: $ACTIONS_ID_TOKEN_REQUEST_URL"
+      - name: Debug OIDC Token Presence
+        run: |
+          echo "Token: $ACTIONS_ID_TOKEN_REQUEST_TOKEN"
+          echo "URL: $ACTIONS_ID_TOKEN_REQUEST_URL"
 
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v2
